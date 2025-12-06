@@ -1,0 +1,10 @@
+
+{
+  "placeholderImages": {
+    "dashboardAdmin": {
+      "src": "https://picsum.photos/seed/dashboard-admin/1000/600",
+      "alt": "Screenshot of the admin dashboard",
+      "hint": "dashboard interface"
+    }
+  }
+}

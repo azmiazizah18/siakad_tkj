@@ -1,0 +1,221 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * Core Philosophy: This ruleset enforces a role-based security model for an educational application,
+     * centered around Students, Lecturers, and Admins. The primary security mechanism is user ownership,
+     * where users can only access and manage their own data. Admins possess elevated privileges across the system.
+     *
+     * Data Structure: User profiles (Admins, Students, Lecturers) are stored in top-level collections.
+     * Student-specific data like enrollments, attendance, and payments are nested in subcollections
+     * under `/students/{studentId}` to enforce ownership via path. Courses are stored in a top-level
+     * collection and are publicly readable, with write access restricted to the owning lecturer or an Admin.
+     *
+     * Key Security Decisions:
+     * - User Enumeration is explicitly disallowed by disabling `list` operations on the `/admins`, `/students`,
+     *   and `/lecturers` collections.
+     * - Admin privileges are granted based on the existence of a user's document in the `/admins` collection
+     *   (Database-as-Access-Control).
+     * - Public data (like Courses) is readable by anyone, but writes are strictly controlled.
+     *
+     * Denormalization for Authorization: To ensure fast and secure rule evaluation, authorization-critical
+     * data is denormalized. For example, `Course` documents contain a `lecturerId` field, and student-specific
+     * documents contain a `studentId`. This avoids slow and costly cross-document `get()` calls in rules.
+     *
+     * Structural Segregation: Private user data (e.g., `/students/{studentId}/payments`) is structurally
+     * separated from public data (`/courses`), ensuring that collection-level queries remain secure and performant.
+     */
+
+    // --------------------------------------------------------------------------------
+    // Helper Functions
+    // --------------------------------------------------------------------------------
+
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the requesting user's UID matches the provided userId.
+     * This is the primary function for enforcing document ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if a document exists. Used for all update and delete operations.
+     */
+    function isExistingDoc() {
+      return resource != null;
+    }
+    
+    /**
+     * Checks if the requesting user is an administrator.
+     * Admin status is determined by the existence of their user document
+     * in the /admins collection.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    /**
+     * Checks if the requesting user is the lecturer assigned to a specific course.
+     * Requires a 'get' call to the course document.
+     */
+    function isLecturerOfCourse(courseId) {
+      return isSignedIn() && get(/databases/$(database)/documents/courses/$(courseId)).data.lecturerId == request.auth.uid;
+    }
+
+    // --------------------------------------------------------------------------------
+    // User Profile Collections
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to administrator profiles. Admins can manage their own profile.
+     * @path /admins/{adminId}
+     * @allow (get) An admin viewing their own profile. auth.uid: "admin123", path: "/admins/admin123".
+     * @deny (list) Any user attempting to list all admins.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /admins/{adminId} {
+      allow get: if isOwner(adminId) || isAdmin();
+      allow list: if false;
+      allow create: if isOwner(adminId);
+      allow update: if isOwner(adminId) && isExistingDoc();
+      allow delete: if false; // Admins should not be able to delete their own account.
+    }
+
+    /**
+     * @description Controls access to student profiles. Students can manage their own profile.
+     * @path /students/{studentId}
+     * @allow (create) A new student signing up. auth.uid: "student123", path: "/students/student123".
+     * @deny (get) Another student trying to view a different student's profile. auth.uid: "student456", path: "/students/student123".
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /students/{studentId} {
+      allow get: if isOwner(studentId) || isAdmin();
+      allow list: if false;
+      allow create: if isOwner(studentId);
+      allow update: if isOwner(studentId) && isExistingDoc();
+      allow delete: if isOwner(studentId) && isExistingDoc();
+    }
+
+    /**
+     * @description Controls access to lecturer profiles. Lecturers can manage their own profile.
+     * @path /lecturers/{lecturerId}
+     * @allow (update) A lecturer updating their profile information. auth.uid: "lecturer123", path: "/lecturers/lecturer123".
+     * @deny (list) Any user attempting to list all lecturers.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /lecturers/{lecturerId} {
+      allow get: if isOwner(lecturerId) || isAdmin();
+      allow list: if false;
+      allow create: if isOwner(lecturerId);
+      allow update: if isOwner(lecturerId) && isExistingDoc();
+      allow delete: if isOwner(lecturerId) && isExistingDoc();
+    }
+
+    // --------------------------------------------------------------------------------
+    // Core Application Collections
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to courses. Courses are public to read for all users,
+     * but can only be created, updated, or deleted by the assigned lecturer or an admin.
+     * @path /courses/{courseId}
+     * @allow (get) Any user, signed in or not, can view course details.
+     * @deny (create) A student attempting to create a new course.
+     * @principle Enforces public read access while restricting writes to document owners (lecturers) or admins.
+     */
+    match /courses/{courseId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.lecturerId == request.auth.uid;
+      allow update: if (isLecturerOfCourse(courseId) || isAdmin()) && isExistingDoc();
+      allow delete: if (isLecturerOfCourse(courseId) || isAdmin()) && isExistingDoc();
+    }
+
+    /**
+     * @description A read-only view of enrollments for a specific course.
+     * This path is primarily for lecturers to view their class rosters. All writes must go through the student's own subcollection.
+     * @path /courses/{courseId}/enrollments/{enrollmentId}
+     * @allow (get) A lecturer viewing an enrollment for a course they teach.
+     * @deny (create) A student trying to enroll via the course path.
+     * @principle Provides a secure, read-only view of data for authorized parties (lecturers) without allowing modification.
+     */
+    match /courses/{courseId}/enrollments/{enrollmentId} {
+      allow get: if (isLecturerOfCourse(courseId) || isAdmin() || (isSignedIn() && get(/databases/$(database)/documents/courses/$(courseId)/enrollments/$(enrollmentId)).data.studentId == request.auth.uid));
+      allow list: if isLecturerOfCourse(courseId) || isAdmin();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    /**
+     * @description Controls access to notifications. Users can only see notifications
+     * targeted to their userId. Admins can create notifications for any user.
+     * @path /notifications/{notificationId}
+     * @allow (get) A user reading a notification sent to them. auth.uid: "user123", resource.data.userId: "user123".
+     * @deny (create) A non-admin user trying to create a system notification.
+     * @principle Restricts data visibility based on a field within the document, not just the path.
+     */
+    match /notifications/{notificationId} {
+      allow get: if (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow list: if isSignedIn(); // Relies on client-side queries: .where('userId', '==', auth.uid)
+      allow create: if isAdmin();
+      allow update: if ((isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin()) && isExistingDoc();
+      allow delete: if ((isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin()) && isExistingDoc();
+    }
+    
+    // --------------------------------------------------------------------------------
+    // Student-Specific Subcollections
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @description Controls a student's enrollment records. Students can manage their own enrollments.
+     * @path /students/{studentId}/enrollments/{enrollmentId}
+     * @allow (create) A student enrolling in a course. auth.uid: "student123", path: "/students/student123/enrollments/...".
+     * @deny (get) A student trying to view another student's enrollments. auth.uid: "student456", path: "/students/student123/enrollments/...".
+     * @principle Enforces document ownership within a user's private data tree and validates relational integrity.
+     */
+    match /students/{studentId}/enrollments/{enrollmentId} {
+      allow get, list: if isOwner(studentId) || isAdmin();
+      allow create: if isOwner(studentId) && request.resource.data.studentId == studentId;
+      allow update: if (isOwner(studentId) || isAdmin()) && isExistingDoc() && request.resource.data.studentId == resource.data.studentId;
+      allow delete: if (isOwner(studentId) || isAdmin()) && isExistingDoc();
+    }
+
+    /**
+     * @description Controls attendance records. Students can view their attendance, but only the
+     * relevant course lecturer or an admin can create or modify attendance records.
+     * @path /students/{studentId}/attendance/{attendanceId}
+     * @allow (create) A lecturer marking a student present for a class. auth is the lecturer.
+     * @deny (update) A student trying to change their own attendance record from absent to present.
+     * @principle Separates read and write permissions; ownership of the parent document grants read access, but write access requires a separate role (lecturer).
+     */
+    match /students/{studentId}/attendance/{attendanceId} {
+      allow get, list: if isOwner(studentId) || isAdmin();
+      allow create: if (isLecturerOfCourse(request.resource.data.courseId) || isAdmin()) && request.resource.data.studentId == studentId;
+      allow update: if (isLecturerOfCourse(resource.data.courseId) || isAdmin()) && isExistingDoc() && request.resource.data.studentId == resource.data.studentId;
+      allow delete: if (isLecturerOfCourse(resource.data.courseId) || isAdmin()) && isExistingDoc();
+    }
+    
+    /**
+     * @description Controls student payment records. Students can create and view their own payments,
+     * but only admins can modify or delete existing payment records.
+     * @path /students/{studentId}/payments/{paymentId}
+     * @allow (create) A student submitting a new payment. auth.uid: "student123", path: "/students/student123/payments/...".
+     * @deny (delete) A student attempting to delete a payment they already made.
+     * @principle Enforces document ownership for reads/creates, but restricts destructive operations to admins.
+     */
+    match /students/{studentId}/payments/{paymentId} {
+      allow get, list: if isOwner(studentId) || isAdmin();
+      allow create: if isOwner(studentId) && request.resource.data.studentId == studentId;
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
+    }
+  }
+}

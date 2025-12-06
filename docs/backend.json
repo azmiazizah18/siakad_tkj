@@ -1,0 +1,483 @@
+{
+  "entities": {
+    "Admin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Admin",
+      "type": "object",
+      "description": "Represents an administrator user in the EduCentral application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Admin entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the administrator.",
+          "format": "email"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name of the administrator."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the admin account was created.",
+          "format": "date-time"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp indicating the last time the admin logged in.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "fullName",
+        "createdAt"
+      ]
+    },
+    "Student": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Student",
+      "type": "object",
+      "description": "Represents a student user in the EduCentral application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Student entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the student.",
+          "format": "email"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name of the student."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "Date of birth of the student.",
+          "format": "date"
+        },
+        "enrollmentDate": {
+          "type": "string",
+          "description": "Date when the student enrolled.",
+          "format": "date"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the student account was created.",
+          "format": "date-time"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp indicating the last time the student logged in.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "fullName",
+        "dateOfBirth",
+        "enrollmentDate",
+        "createdAt"
+      ]
+    },
+    "Lecturer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Lecturer",
+      "type": "object",
+      "description": "Represents a lecturer user in the EduCentral application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Lecturer entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the lecturer.",
+          "format": "email"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name of the lecturer."
+        },
+        "hireDate": {
+          "type": "string",
+          "description": "Date when the lecturer was hired.",
+          "format": "date"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the lecturer account was created.",
+          "format": "date-time"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp indicating the last time the lecturer logged in.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "fullName",
+        "hireDate",
+        "createdAt"
+      ]
+    },
+    "Course": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Course",
+      "type": "object",
+      "description": "Represents a course offered in the EduCentral application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Course entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the course."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the course."
+        },
+        "lecturerId": {
+          "type": "string",
+          "description": "Reference to Lecturer. (Relationship: Lecturer 1:N Course)"
+        },
+        "credits": {
+          "type": "number",
+          "description": "Number of credits the course is worth."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "lecturerId",
+        "credits"
+      ]
+    },
+    "Enrollment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Enrollment",
+      "type": "object",
+      "description": "Represents a student's enrollment in a course.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Enrollment entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Enrollment)"
+        },
+        "courseId": {
+          "type": "string",
+          "description": "Reference to Course. (Relationship: Course 1:N Enrollment)"
+        },
+        "enrollmentDate": {
+          "type": "string",
+          "description": "Date when the student enrolled in the course.",
+          "format": "date"
+        },
+        "grade": {
+          "type": "string",
+          "description": "The grade the student received in the course."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "courseId",
+        "enrollmentDate"
+      ]
+    },
+    "Attendance": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Attendance",
+      "type": "object",
+      "description": "Represents a student's attendance record for a specific course.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Attendance entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Attendance)"
+        },
+        "courseId": {
+          "type": "string",
+          "description": "Reference to Course. (Relationship: Course 1:N Attendance)"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the attendance record.",
+          "format": "date"
+        },
+        "isPresent": {
+          "type": "boolean",
+          "description": "Indicates whether the student was present or absent."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "courseId",
+        "date",
+        "isPresent"
+      ]
+    },
+    "Payment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Payment",
+      "type": "object",
+      "description": "Represents a payment made by a student.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Payment entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N Payment)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the payment."
+        },
+        "paymentDate": {
+          "type": "string",
+          "description": "Date when the payment was made.",
+          "format": "date"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Method used for the payment (e.g., credit card, bank transfer)."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "amount",
+        "paymentDate",
+        "paymentMethod"
+      ]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a notification sent to a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Notification entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the user who received the notification. Can be Admin, Student, or Lecturer."
+        },
+        "message": {
+          "type": "string",
+          "description": "Content of the notification."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the notification was sent.",
+          "format": "date-time"
+        },
+        "isRead": {
+          "type": "boolean",
+          "description": "Indicates whether the notification has been read."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "message",
+        "timestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/admins/{adminId}",
+        "definition": {
+          "entityName": "Admin",
+          "schema": {
+            "$ref": "#/backend/entities/Admin"
+          },
+          "description": "Stores administrator user profiles. Uses path-based ownership for security.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique identifier for the administrator."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}",
+        "definition": {
+          "entityName": "Student",
+          "schema": {
+            "$ref": "#/backend/entities/Student"
+          },
+          "description": "Stores student user profiles. Uses path-based ownership for security.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/lecturers/{lecturerId}",
+        "definition": {
+          "entityName": "Lecturer",
+          "schema": {
+            "$ref": "#/backend/entities/Lecturer"
+          },
+          "description": "Stores lecturer user profiles. Uses path-based ownership for security.",
+          "params": [
+            {
+              "name": "lecturerId",
+              "description": "The unique identifier for the lecturer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/courses/{courseId}",
+        "definition": {
+          "entityName": "Course",
+          "schema": {
+            "$ref": "#/backend/entities/Course"
+          },
+          "description": "Stores course information. Includes lecturerId to denote ownership.",
+          "params": [
+            {
+              "name": "courseId",
+              "description": "The unique identifier for the course."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/enrollments/{enrollmentId}",
+        "definition": {
+          "entityName": "Enrollment",
+          "schema": {
+            "$ref": "#/backend/entities/Enrollment"
+          },
+          "description": "Stores enrollment records for each student.  Uses path-based ownership.  Located as a subcollection to allow listing enrollments for a given student.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "enrollmentId",
+              "description": "The unique identifier for the enrollment record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/courses/{courseId}/enrollments/{enrollmentId}",
+        "definition": {
+          "entityName": "Enrollment",
+          "schema": {
+            "$ref": "#/backend/entities/Enrollment"
+          },
+          "description": "Stores enrollment records for each course. Uses path-based ownership. Located as a subcollection to allow listing enrollments for a given course.",
+          "params": [
+            {
+              "name": "courseId",
+              "description": "The unique identifier for the course."
+            },
+            {
+              "name": "enrollmentId",
+              "description": "The unique identifier for the enrollment record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/attendance/{attendanceId}",
+        "definition": {
+          "entityName": "Attendance",
+          "schema": {
+            "$ref": "#/backend/entities/Attendance"
+          },
+          "description": "Stores attendance records for each student. Uses path-based ownership.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "attendanceId",
+              "description": "The unique identifier for the attendance record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/students/{studentId}/payments/{paymentId}",
+        "definition": {
+          "entityName": "Payment",
+          "schema": {
+            "$ref": "#/backend/entities/Payment"
+          },
+          "description": "Stores payment records for each student. Uses path-based ownership.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique identifier for the student."
+            },
+            {
+              "name": "paymentId",
+              "description": "The unique identifier for the payment record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": {
+            "$ref": "#/backend/entities/Notification"
+          },
+          "description": "Stores notification messages.  Requires rules to allow admins to create and users to view notifications which target their user ID.",
+          "params": [
+            {
+              "name": "notificationId",
+              "description": "The unique identifier for the notification."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support EduCentral's role-based access control and data management features, focusing on security, scalability, and ease of debugging. The structure uses path-based ownership for private user data and membership maps for collaborative data. Authorization independence is achieved through denormalization.  All collections are designed to have a homogeneous security posture. This design prioritizes the core design principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters).\n\n**Authorization Independence & Denormalization:**\n\n*   For entities nested under users (e.g., Payments, Attendance), the `studentId` field acts as the owner and is present in every document, enabling rules to validate ownership without `get()` calls.\n*   The Course documents include `lecturerId` to denote ownership and allow lecturers to manage their courses. Enrollments do not need to denormalize additional fields given they are subcollections of both Students and Courses.\n*   Notifications are created to `/notifications/{notificationId}` and will require rules to allow admins to create and users to view notifications which target their user ID.\n\n**Structural Segregation (Homogeneous Security Posture):**\n\n*   Each top-level collection (e.g., `/admins`, `/students`, `/lecturers`, `/courses`, `/notifications`) contains documents of the same type and security requirements.\n\n**Access Modeling:**\n\n*   **Private Data:** User profiles (`/admins/{adminId}`, `/students/{studentId}`, `/lecturers/{lecturerId}`) use path-based ownership.\n*   **Collaborative Data:** While not explicitly collaborative in the initial schema, if Courses were to become collaborative (e.g., multiple lecturers), a `members` map could be added to the `Course` entity and denormalized to subcollections if necessary.\n*   **Global Roles (DBAC):** The existence of a document in `/admins/{adminId}` implicitly grants admin privileges. Rules can check for the existence of this document to authorize admin-only operations.\n\n**QAPs (Rules are not Filters):**\n\n*   The data structure enables secure `list` operations. For example, a lecturer can securely list courses they own (where `course.lecturerId == request.auth.uid`). A student can list their own enrollments (where `enrollment.studentId == request.auth.uid`).\n\n**Invariants:**\n\n*   Timestamps (`createdAt`, `enrollmentDate`, `paymentDate`, `timestamp`) can be enforced via rules to ensure data integrity.\n\nThis structure avoids hierarchical authorization dependencies by denormalizing authorization context (Strategy A), ensures homogeneous security postures within collections (Strategy B), and employs consistent access modeling patterns (Strategy C). It also promotes data clarity and predictability through explicit state modeling and semantic naming conventions (Strategy D)."
+  }
+}
+    
