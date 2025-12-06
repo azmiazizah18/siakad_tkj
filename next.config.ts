@@ -1,8 +1,18 @@
-
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+
+  // ===================================================
+  // BARIS BARU WAJIB UNTUK GITHUB PAGES (Static Export)
+  // ===================================================
+  output: 'export',
+
+  // base path harus sesuai dengan nama repositori Anda: /siakad_tkj
+  basePath: '/siakad_tkj',
+
+  // ===================================================
+
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -10,6 +20,8 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    // Tambahkan unoptimized: true agar component Image Next.js berfungsi di Static Export
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -39,7 +51,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     allowedDevOrigins: [
-        'https://6000-firebase-tkj-1758129580228.cluster-ejd22kqny5htuv5dfowoyipt52.cloudworkstations.dev'
+      'https://6000-firebase-tkj-1758129580228.cluster-ejd22kqny5htuv5dfowoyipt52.cloudworkstations.dev'
     ]
   }
 };
